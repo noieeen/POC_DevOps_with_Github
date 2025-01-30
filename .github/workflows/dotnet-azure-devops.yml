@@ -47,7 +47,7 @@ jobs:
           curl -X POST -u "user:${{ secrets.AZURE_DEVOPS_PAT }}" \
           -H "Content-Type: application/json" \
           -d '{
-                "definitionId": POC_DevOpsGithub,
+                "definitionId": POC_DevOps-CI,
                 "description": "Triggered from GitHub Actions",
                 "artifacts": [
                   {
