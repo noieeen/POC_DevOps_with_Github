@@ -1,0 +1,62 @@
+name: Build and Deploy .NET to Azure DevOps
+
+on:
+  push:
+    branches:
+      - main  # Change this to your main branch name
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'  # Change to your target .NET version
+
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      - name: Build Solution
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish Application
+        run: dotnet publish -c Release -o ./publish
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app
+          path: ./publish
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: app
+          path: ./publish
+
+      - name: Trigger Azure DevOps Release
+        run: |
+          curl -X POST -u "user:${{ secrets.AZURE_DEVOPS_PAT }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+                "definitionId": POC_DevOpsGithub,
+                "description": "Triggered from GitHub Actions",
+                "artifacts": [
+                  {
+                    "alias": "drop",
+                    "instanceReference": {
+                      "id": "99",
+                      "name": "GitHub"
+                    }
+                  }
+                ]
+              }' \
+          "https://dev.azure.com/tharnnn1401/POC_DevOps/_apis/release/releases?api-version=6.0"
